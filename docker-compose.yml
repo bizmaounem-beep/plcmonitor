@@ -1,0 +1,24 @@
+services:
+  plcmonitor:
+    build: .
+    image: plcmonitor:latest
+    container_name: plcmonitor
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - Plc__IpAddress=192.168.1.99
+      - Plc__Port=9600
+      - Plc__DestNode=0
+      - Plc__SrcNode=0
+      - Plc__PollIntervalMs=500
+      - Database__Path=/data/stoppages.db
+      - ASPNETCORE_URLS=http://0.0.0.0:5000
+      - TZ=Africa/Casablanca
+    volumes:
+      - ./data:/data
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"

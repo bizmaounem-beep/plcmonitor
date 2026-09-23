@@ -1,0 +1,12 @@
+**/bin/
+**/obj/
+**/publish/
+**/.vs/
+*.user
+*.suo
+data/
+*.db
+*.db-shm
+*.db-wal
+.DS_Store
+Thumbs.db

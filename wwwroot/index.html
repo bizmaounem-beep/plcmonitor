@@ -1,0 +1,76 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Production Line Monitor</title>
+    <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+    <header class="topbar">
+        <div class="brand">
+            <div class="brand-title">Production Line Monitor</div>
+            <div class="brand-sub" id="conn">Connecting…</div>
+        </div>
+        <nav class="nav" id="nav">
+            <a href="#/" data-route="dashboard">Dashboard</a>
+            <a href="#/line1" data-route="line1">Line 1</a>
+            <a href="#/line2" data-route="line2">Line 2</a>
+            <a href="#/line3" data-route="line3">Line 3</a>
+            <a href="#/tipper" data-route="tipper">Box Tipper</a>
+            <a href="#/history" data-route="history">History</a>
+        </nav>
+        <div class="clock" id="clock"></div>
+    </header>
+
+    <main id="app">
+        <!-- Alert banner shown on any screen when a stoppage is active -->
+        <div id="alert-banner" class="alert-banner hidden"></div>
+
+        <!-- Pages are rendered into these containers -->
+        <section id="page-dashboard" class="page"></section>
+        <section id="page-line1" class="page hidden"></section>
+        <section id="page-line2" class="page hidden"></section>
+        <section id="page-line3" class="page hidden"></section>
+        <section id="page-tipper" class="page hidden"></section>
+        <section id="page-history" class="page hidden"></section>
+    </main>
+
+    <footer class="footer">
+        Read-only monitoring — PLC is never written to.
+    </footer>
+
+    <!-- ═══════════════════════════════════════════════════════
+         Operator reason modal
+         MUST come before <script> so app.js can find its elements
+         ═══════════════════════════════════════════════════════ -->
+    <div id="reason-modal" class="modal-backdrop hidden">
+        <div class="modal">
+            <div class="modal-head">
+                <div>
+                    <div class="modal-title" id="reason-modal-title">Set stop reason</div>
+                    <div class="modal-sub" id="reason-modal-sub"></div>
+                </div>
+                <button class="modal-close" onclick="closeReasonModal()">✕</button>
+            </div>
+            <div class="modal-body" id="reason-modal-body">
+                <div class="reason-grid" id="reason-grid"></div>
+                <label class="reason-note-label">
+                    Optional note
+                    <textarea id="reason-note" rows="2"
+                              placeholder="e.g. waiting for cardboard delivery"></textarea>
+                </label>
+            </div>
+            <div class="modal-foot">
+                <button class="btn-secondary" onclick="closeReasonModal()">Cancel</button>
+                <button class="btn-primary" id="reason-save" disabled>Save reason</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════
+         Script LAST — everything above exists when it runs
+         ═══════════════════════════════════════════════════════ -->
+    <script src="js/app.js?v=3"></script>
+</body>
+</html>
