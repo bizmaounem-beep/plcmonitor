@@ -1,12 +1,18 @@
+# Build outputs
 **/bin/
 **/obj/
 **/publish/
+
+# Visual Studio
 **/.vs/
 *.user
 *.suo
-data/
+
+# SQLite database (inside ./data/ at runtime — the folder itself is fine)
 *.db
 *.db-shm
 *.db-wal
+
+# OS
 .DS_Store
 Thumbs.db
