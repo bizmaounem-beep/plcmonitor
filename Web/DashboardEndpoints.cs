@@ -37,8 +37,10 @@ public static class DashboardEndpoints
                 var lineSections = SectionCatalog.All.Where(s => s.LineKey == line.Key).ToList();
                 var keys = lineSections.Select(s => s.Key).ToList();
                 var activeStops = keys.Count(k =>
-                    bySection.TryGetValue(k, out var st) && st.IsStopped);
+                    bySection.TryGetValue(k, out var st) && st.IsStopped && st.HasLiveData);
                 var anyGated = lineSections.Any(s => s.IsGatedBySizer) && !detector.SizerRunning;
+                var anyLive = keys.Any(k =>
+                    bySection.TryGetValue(k, out var st) && st.HasLiveData);
 
                 return new LineSummaryDto
                 {
@@ -46,6 +48,7 @@ public static class DashboardEndpoints
                     DisplayName = line.DisplayName,
                     Description = line.Description,
                     IsRunning = activeStops == 0,
+                    HasLiveData = anyLive,
                     IsGated = anyGated,
                     ActiveStops = anyGated ? 0 : activeStops,
                     TotalStations = lineSections.Count,
@@ -65,17 +68,19 @@ public static class DashboardEndpoints
             var global = all.Where(s => globalKeys.Contains(s.Key)).ToList();
 
             var everySection = SectionCatalog.All.Select(s => s.Key).ToList();
-            var anyActive = all.Any(s => s.IsStopped);
+            var anyActive = all.Any(s => s.IsStopped && s.HasLiveData);
+            var anyLiveOverall = all.Any(s => s.HasLiveData);
 
             return Results.Ok(new OverviewDto
             {
                 LineRunning = !anyActive,
-                SizerRunning = detector.SizerRunning,
+                SizerRunning = anyLiveOverall && detector.SizerRunning,
+                HasLiveData = anyLiveOverall,
                 TotalDowntimeSeconds = repo.GetTotalDowntimeSecondsForSections(everySection),
                 PlannedDowntimeSeconds = repo.SumByCategoryForSections(everySection, "Planned"),
                 UnplannedDowntimeSeconds = repo.SumByCategoryForSections(everySection, "Unplanned"),
                 UntaggedDowntimeSeconds = repo.SumByCategoryForSections(everySection, "Untagged"),
-                ActiveStoppages = all.Count(s => s.IsStopped),
+                ActiveStoppages = all.Count(s => s.IsStopped && s.HasLiveData),
                 Lines = lines,
                 Machines = machines,
                 GlobalSections = global,

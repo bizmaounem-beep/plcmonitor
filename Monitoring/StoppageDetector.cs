@@ -94,9 +94,32 @@ public sealed class StoppageDetector
 
     public IReadOnlyList<SectionStatusDto> GetStatus()
     {
-        // ── Compute the "live data" flag once for the whole snapshot ──
+        // ── Determine if the PLC is currently reachable ──────────────
         var live = MonitoringService.LastSuccessfulPollUtc is { } last &&
                    (DateTime.UtcNow - last).TotalSeconds < LiveDataMaxAgeSeconds;
+
+        // ── If PLC is offline, forcibly close any active events ──────
+        //    and reset internal state so we don't show fake stoppages.
+        if (!live)
+        {
+            foreach (var (key, st) in _states)
+            {
+                if (st.WasStopped && st.ActiveId.HasValue)
+                {
+                    var ended = DateTime.UtcNow;
+                    var dur = (ended - st.StartedAt!.Value).TotalSeconds;
+                    _repo.CloseStoppage(st.ActiveId.Value, ended, dur,
+                        string.IsNullOrWhiteSpace(st.Cause)
+                            ? "(closed: PLC communication lost)"
+                            : st.Cause + " (closed: PLC communication lost)");
+                }
+                st.WasStopped = false;
+                st.StartedAt = null;
+                st.ActiveId = null;
+                st.Cause = "";
+            }
+            _sizerRunning = false;
+        }
 
         var list = new List<SectionStatusDto>();
         foreach (var def in SectionCatalog.All)
@@ -105,7 +128,6 @@ public sealed class StoppageDetector
             var total = _repo.GetTotalDowntimeSeconds(def.Key);
             var history = _repo.GetHistory(def.Key, int.MaxValue);
 
-            // Fetch the active event's operator fields (if any)
             string category = "Untagged";
             string operatorReason = "";
             long? activeId = null;
@@ -127,7 +149,7 @@ public sealed class StoppageDetector
                 Description = def.Description,
                 IsRunning = !state.WasStopped,
                 IsStopped = state.WasStopped,
-                HasLiveData = live,                       // ⬅ NEW
+                HasLiveData = live,
                 IsGatedBySizer = def.IsGatedBySizer,
                 GateOpen = _sizerRunning,
                 CurrentCause = state.Cause,
